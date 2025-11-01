@@ -1,56 +1,41 @@
-import dotenv from "dotenv";
-import express from "express";
-import bodyParser from "body-parser";
-import cors from "cors";
-import Brevo from "@getbrevo/brevo";
+import fetch from "node-fetch";
 
-dotenv.config();
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "Method Not Allowed" });
+  }
 
-const app = express();
-app.use(cors());
-app.use(bodyParser.json());
+  const { name, phone, pickup, drop, date, time, vehicle } = req.body;
 
-// ✅ Serve static frontend
-app.use(express.static("public"));
-
-// ✅ Booking API endpoint
-app.post("/api/book", async (req, res) => {
   try {
-    const { name, phone, pickup, drop, date, time, vehicle } = req.body;
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "accept": "application/json",
+        "api-key": process.env.BREVO_API_KEY,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        sender: { name: "FastPoint Cab", email: "your@email.com" },
+        to: [{ email: "your@email.com" }],
+        subject: "New Taxi Booking",
+        htmlContent: `
+          <h3>New Booking Request</h3>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Phone:</strong> ${phone}</p>
+          <p><strong>Pickup:</strong> ${pickup}</p>
+          <p><strong>Drop:</strong> ${drop}</p>
+          <p><strong>Date:</strong> ${date}</p>
+          <p><strong>Time:</strong> ${time}</p>
+          <p><strong>Vehicle:</strong> ${vehicle}</p>
+        `
+      })
+    });
 
-    const apiKey = process.env.BREVO_API_KEY;
-    if (!apiKey) {
-      console.error("❌ Missing BREVO_API_KEY in .env file!");
-      return res.status(500).json({ message: "Server error: Missing API key." });
-    }
+    if (!response.ok) throw new Error("Failed to send email");
 
-    const defaultClient = Brevo.ApiClient.instance;
-    defaultClient.authentications["api-key"].apiKey = apiKey;
-
-    const apiInstance = new Brevo.TransactionalEmailsApi();
-    const sendSmtpEmail = {
-      sender: { name: "FastPoint Cab", email: "fastpointcab@gmail.com" },
-      to: [{ email: "fastpointcab@gmail.com" }],
-      subject: `🚕 New Taxi Booking from ${name}`,
-      htmlContent: `
-        <h3>New Taxi Booking Details</h3>
-        <p><b>Name:</b> ${name}</p>
-        <p><b>Phone:</b> ${phone}</p>
-        <p><b>Pickup:</b> ${pickup}</p>
-        <p><b>Drop:</b> ${drop}</p>
-        <p><b>Date:</b> ${date}</p>
-        <p><b>Time:</b> ${time}</p>
-        <p><b>Vehicle:</b> ${vehicle || "Not selected"}</p>
-      `,
-    };
-
-    await apiInstance.sendTransacEmail(sendSmtpEmail);
     res.status(200).json({ message: "Booking email sent successfully!" });
   } catch (error) {
-    console.error("❌ Email send error:", error?.response?.body || error);
-    res.status(500).json({ message: "Failed to send booking." });
+    res.status(500).json({ message: error.message });
   }
-});
-
-// ✅ Export the app (important for Vercel)
-export default app;
+}
