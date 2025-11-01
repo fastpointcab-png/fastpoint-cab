@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
 })
 
 
+
         const data = await res.json();
 
         if (res.ok) {
