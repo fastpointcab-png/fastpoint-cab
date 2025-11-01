@@ -1,5 +1,5 @@
 {
-  "name": "taxi-booking",
+  "name": "fastpoint-cab",
   "version": "1.0.0",
   "description": "Taxi booking backend with Brevo email integration",
   "main": "api/server.js",
