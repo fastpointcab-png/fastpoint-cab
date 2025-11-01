@@ -16,8 +16,8 @@ export default async function handler(req, res) {
         "content-type": "application/json"
       },
       body: JSON.stringify({
-        sender: { name: "FastPoint Cab", email: "your@email.com" },
-        to: [{ email: "your@email.com" }],
+        sender: { name: "FastPoint Cab", email: "fastpointcab@gmail.com" },
+        to: [{ email: "fastpointcab@gmail.com" }],
         subject: "New Taxi Booking",
         htmlContent: `
           <h3>New Booking Request</h3>
