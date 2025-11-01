@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function () {
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
 
-      // Collect data from inputs
       const formData = {
         pickup: document.getElementById('pickup').value.trim(),
         drop: document.getElementById('drop').value.trim(),
@@ -16,20 +15,18 @@ document.addEventListener('DOMContentLoaded', function () {
         phone: document.getElementById('phone').value.trim()
       };
 
-      // Basic validation
       if (!formData.name || !formData.phone || !formData.pickup || !formData.drop) {
         alert('⚠️ Please fill in all required fields.');
         return;
       }
 
       try {
-        // Send data to backend
-        const res = await fetch('http://localhost:3000/api/book', {
+        const res = await fetch('/api/book', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(formData)
+})
 
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
 
         const data = await res.json();
 
@@ -40,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
           alert('❌ Failed to send booking: ' + (data.error || 'Unknown error'));
         }
       } catch (error) {
-        console.error(error);
+        console.error('⚠️ Network error:', error);
         alert('⚠️ Network error. Please try again later.');
       }
     });
