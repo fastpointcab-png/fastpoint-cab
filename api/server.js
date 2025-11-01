@@ -4,17 +4,13 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import Brevo from "@getbrevo/brevo";
 
-// Load environment variables from .env
 dotenv.config();
 
 const app = express();
-const port = 3000;
-
-// Middleware setup
 app.use(cors());
 app.use(bodyParser.json());
 
-// ✅ Serve frontend static files (HTML, CSS, JS)
+// ✅ Serve static frontend
 app.use(express.static("public"));
 
 // ✅ Booking API endpoint
@@ -22,22 +18,16 @@ app.post("/api/book", async (req, res) => {
   try {
     const { name, phone, pickup, drop, date, time, vehicle } = req.body;
 
-    // ✅ Check if API key exists
-    const defaultClient = Brevo.ApiClient.instance;
     const apiKey = process.env.BREVO_API_KEY;
-
     if (!apiKey) {
       console.error("❌ Missing BREVO_API_KEY in .env file!");
       return res.status(500).json({ message: "Server error: Missing API key." });
     }
 
+    const defaultClient = Brevo.ApiClient.instance;
     defaultClient.authentications["api-key"].apiKey = apiKey;
 
-    console.log("🔑 API Key Loaded:", apiKey.slice(0, 8) + "********");
-
     const apiInstance = new Brevo.TransactionalEmailsApi();
-
-    // ✅ Email content
     const sendSmtpEmail = {
       sender: { name: "FastPoint Cab", email: "fastpointcab@gmail.com" },
       to: [{ email: "fastpointcab@gmail.com" }],
@@ -54,10 +44,7 @@ app.post("/api/book", async (req, res) => {
       `,
     };
 
-    // ✅ Send the email via Brevo API
-    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    console.log("📨 Email sent successfully:", result.messageId || result);
-
+    await apiInstance.sendTransacEmail(sendSmtpEmail);
     res.status(200).json({ message: "Booking email sent successfully!" });
   } catch (error) {
     console.error("❌ Email send error:", error?.response?.body || error);
@@ -65,7 +52,5 @@ app.post("/api/book", async (req, res) => {
   }
 });
 
-// ✅ Start the Express server
-app.listen(port, () => {
-  console.log(`🚗 Server running at http://localhost:${port}`);
-});
+// ✅ Export the app (important for Vercel)
+export default app;
